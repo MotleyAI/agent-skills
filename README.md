@@ -148,7 +148,7 @@ sequenceDiagram
 ## Learn More
 
 - **Website:** [motley.ai](https://motley.ai)
-- **Questions?** Open an issue or reach out at hello@motley.ai
+- **Questions?** Open an issue or [book a demo](https://motley.ai/book-a-demo)
 
 ---
 
