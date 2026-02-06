@@ -192,3 +192,50 @@ Monthly revenue breakdown by product category
 ```
 Sales by region with months as columns (set pivot_dimension="month")
 ```
+
+---
+
+## render_chart
+
+Render a chart block to a PNG image and return it as base64-encoded data.
+
+### Arguments
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `master_id` | integer | **Yes** | The master containing the slide. |
+| `slide_name` | string | **Yes** | The slide containing the chart. |
+| `block_name` | string | **Yes** | The chart block to render. |
+| `width` | integer | No | Image width in pixels. Default: 800. |
+| `height` | integer | No | Image height in pixels. Default: 600. |
+
+### Returns
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Whether rendering succeeded |
+| `master_id` | integer | The master ID |
+| `slide_name` | string | The slide name |
+| `block_name` | string | The block name |
+| `image_base64` | string | Base64-encoded PNG image data |
+| `width` | integer | Actual image width used |
+| `height` | integer | Actual image height used |
+| `resolved` | boolean | Whether resolution was triggered (true if chart had no content) |
+| `error` | string | Error message (only if success=false) |
+
+### Notes
+
+- If the chart has not been resolved (no content), resolution is triggered automatically first
+- The image is rendered using ECharts and returned as base64-encoded PNG data
+- Default dimensions are 800x600 pixels
+- Uses 100 DPI internally for converting pixels to inches
+
+### Example Usage
+
+```
+render_chart(master_id=42, slide_name="Overview", block_name="revenue_chart")
+```
+
+```
+render_chart(master_id=42, slide_name="Detail", block_name="trend_chart", width=1200, height=800)
+```

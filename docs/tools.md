@@ -1,6 +1,6 @@
 # MCP Tools Reference
 
-Comprehensive reference for all 32 tools available via the Motley MCP server.
+Comprehensive reference for all 33 tools available via the Motley MCP server.
 
 ## Overview
 
@@ -14,7 +14,7 @@ The MCP server provides tools for building data-driven presentations programmati
 | [Layout](tools/layout.md) | 5 | Layout libraries and master creation |
 | [Datasource](tools/datasource.md) | 6 | Data source management and schema modification |
 | [Master](tools/master.md) | 9 | Master inspection, resolution, and slide management |
-| [Element](tools/element.md) | 4 | Content block updates (text, table, chart, query) |
+| [Element](tools/element.md) | 5 | Content block updates (text, table, chart, query) |
 
 ## Quick Reference
 
@@ -74,6 +74,7 @@ The MCP server provides tools for building data-driven presentations programmati
 | [`update_table_block`](tools/element.md#update_table_block) | Set table template and resolve |
 | [`update_chart_block`](tools/element.md#update_chart_block) | Generate chart from prompt |
 | [`update_query_block`](tools/element.md#update_query_block) | Create/update query in block |
+| [`render_chart`](tools/element.md#render_chart) | Render chart to base64 PNG image |
 
 ## Typical Workflow
 

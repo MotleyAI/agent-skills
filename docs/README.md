@@ -33,7 +33,7 @@ See [setup.md](setup.md) for detailed installation instructions.
 
 ## Available Tools
 
-The Motley MCP server provides 32 tools organized into five categories:
+The Motley MCP server provides 33 tools organized into five categories:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
@@ -41,7 +41,7 @@ The Motley MCP server provides 32 tools organized into five categories:
 | **Layout** | 5 | Layout libraries and template management |
 | **Datasource** | 6 | Data modeling and schema management |
 | **Master** | 9 | Operations on master decks and slides |
-| **Element** | 4 | Content blocks (text, table, chart, query) |
+| **Element** | 5 | Content blocks (text, table, chart, query) |
 
 ### Outline Tools
 
@@ -99,6 +99,7 @@ The Motley MCP server provides 32 tools organized into five categories:
 | `update_table_block` | Update table block template |
 | `update_chart_block` | Update chart with LLM prompt |
 | `update_query_block` | Create/update numerical query |
+| `render_chart` | Render chart to base64 PNG image |
 
 See [tools.md](tools.md) for the complete tool reference with detailed documentation for each tool:
 - [Outline Tools](tools/outline.md) — Deck planning and outline sessions
