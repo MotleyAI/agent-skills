@@ -1,6 +1,6 @@
 # MCP Tools Reference
 
-Comprehensive reference for all 33 tools available via the Motley MCP server.
+Comprehensive reference for all 32 tools available via the Motley MCP server.
 
 ## Overview
 
@@ -13,7 +13,7 @@ The MCP server provides tools for building data-driven presentations programmati
 | [Outline](tools/outline.md) | 8 | Deck planning and outline sessions |
 | [Layout](tools/layout.md) | 5 | Layout libraries and master creation |
 | [Datasource](tools/datasource.md) | 6 | Data source management and schema modification |
-| [Master](tools/master.md) | 9 | Master inspection, resolution, and slide management |
+| [Master](tools/master.md) | 8 | Master inspection, resolution, and slide management |
 | [Element](tools/element.md) | 5 | Content block updates (text, table, chart, query) |
 
 ## Quick Reference
@@ -61,7 +61,6 @@ The MCP server provides tools for building data-driven presentations programmati
 | [`inspect_block`](tools/master.md#inspect_block) | Get block configuration |
 | [`get_master_variables`](tools/master.md#get_master_variables) | List available variables |
 | [`resolve_master`](tools/master.md#resolve_master) | Resolve all outdated blocks |
-| [`resolve_block`](tools/master.md#resolve_block) | Force-resolve specific block |
 | [`copy_slide`](tools/master.md#copy_slide) | Duplicate a slide |
 | [`move_slide`](tools/master.md#move_slide) | Reposition a slide |
 | [`delete_slide`](tools/master.md#delete_slide) | Remove a slide |

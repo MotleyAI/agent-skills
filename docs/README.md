@@ -33,14 +33,14 @@ See [setup.md](setup.md) for detailed installation instructions.
 
 ## Available Tools
 
-The Motley MCP server provides 33 tools organized into five categories:
+The Motley MCP server provides 32 tools organized into five categories:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
 | **Outline** | 8 | Deck planning and outline sessions |
 | **Layout** | 5 | Layout libraries and template management |
 | **Datasource** | 6 | Data modeling and schema management |
-| **Master** | 9 | Operations on master decks and slides |
+| **Master** | 8 | Operations on master decks and slides |
 | **Element** | 5 | Content blocks (text, table, chart, query) |
 
 ### Outline Tools
@@ -86,7 +86,6 @@ The Motley MCP server provides 33 tools organized into five categories:
 | `inspect_block` | Get specific block content |
 | `get_master_variables` | Get all variables for a master |
 | `resolve_master` | Trigger resolution of all blocks |
-| `resolve_block` | Resolve a specific block |
 | `copy_slide` | Copy slide with contents |
 | `move_slide` | Move slide to new position |
 | `delete_slide` | Delete a slide |

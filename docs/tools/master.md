@@ -149,36 +149,6 @@ Trigger resolution of all outdated blocks across all slides in a master.
 
 ---
 
-## resolve_block
-
-Mark a specific block as out-of-date and trigger its resolution.
-
-### Arguments
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `master_id` | integer | **Yes** | The master containing the block. |
-| `slide_name` | string | **Yes** | The slide containing the block. |
-| `block_name` | string | **Yes** | The specific block to mark out-of-date and resolve. |
-
-### Returns
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `success` | boolean | Whether resolution completed |
-| `master_id` | integer | The master |
-| `slide_name` | string | The slide |
-| `block_name` | string | The block |
-| `resolved` | boolean | Whether the block was actually resolved |
-| `error` | string | Error message (only if `success=false`) |
-
-### Notes
-
-- The block is first marked as `is_out_of_date=true`, then resolution is triggered
-- Use this to force re-resolution of a specific block after changing its template
-
----
-
 ## copy_slide
 
 Copy a slide with all its contents to a new position.
