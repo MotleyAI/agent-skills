@@ -22,58 +22,58 @@ The MCP server provides tools for building data-driven presentations programmati
 
 | Tool | Description |
 |------|-------------|
-| `create_outline` | Create a new deck outline session |
-| `get_outline` | Get complete outline with all cards |
-| `clear_outline` | Remove all cards, keep session |
-| `delete_outline` | Delete session and all cards |
-| `add_outline_card` | Add a card to an outline |
-| `edit_outline_card` | Edit card title/content/cubes |
-| `move_outline_card` | Reposition a card |
-| `delete_outline_card` | Remove a card |
+| [`create_outline`](tools/outline.md#create_outline) | Create a new deck outline session |
+| [`get_outline`](tools/outline.md#get_outline) | Get complete outline with all cards |
+| [`clear_outline`](tools/outline.md#clear_outline) | Remove all cards, keep session |
+| [`delete_outline`](tools/outline.md#delete_outline) | Delete session and all cards |
+| [`add_outline_card`](tools/outline.md#add_outline_card) | Add a card to an outline |
+| [`edit_outline_card`](tools/outline.md#edit_outline_card) | Edit card title/content/cubes |
+| [`move_outline_card`](tools/outline.md#move_outline_card) | Reposition a card |
+| [`delete_outline_card`](tools/outline.md#delete_outline_card) | Remove a card |
 
 ### Layout Tools
 
 | Tool | Description |
 |------|-------------|
-| `list_layout_libraries` | List available layout libraries |
-| `list_masters` | List all master decks |
-| `inspect_layout_library` | Get library structure details |
-| `get_thumbnails` | Get slide thumbnail URLs |
-| `create_master` | Create master from library |
+| [`list_layout_libraries`](tools/layout.md#list_layout_libraries) | List available layout libraries |
+| [`list_masters`](tools/layout.md#list_masters) | List all master decks |
+| [`inspect_layout_library`](tools/layout.md#inspect_layout_library) | Get library structure details |
+| [`get_thumbnails`](tools/layout.md#get_thumbnails) | Get slide thumbnail URLs |
+| [`create_master`](tools/layout.md#create_master) | Create master from library |
 
 ### Datasource Tools
 
 | Tool | Description |
 |------|-------------|
-| `datasources_summary` | List all cubes with schemas |
-| `inspect_datasource` | Get cube details with sample data |
-| `create_datasource` | Create cube from SQL query |
-| `add_measures` | Add custom measures to cube |
-| `add_dimensions` | Add custom dimensions to cube |
-| `delete_measures_dimensions` | Remove measures/dimensions |
+| [`datasources_summary`](tools/datasource.md#datasources_summary) | List all cubes with schemas |
+| [`inspect_datasource`](tools/datasource.md#inspect_datasource) | Get cube details with sample data |
+| [`create_datasource`](tools/datasource.md#create_datasource) | Create cube from SQL query |
+| [`add_measures`](tools/datasource.md#add_measures) | Add custom measures to cube |
+| [`add_dimensions`](tools/datasource.md#add_dimensions) | Add custom dimensions to cube |
+| [`delete_measures_dimensions`](tools/datasource.md#delete_measures_dimensions) | Remove measures/dimensions |
 
 ### Master Tools
 
 | Tool | Description |
 |------|-------------|
-| `get_master_summary` | Get master outline with slides |
-| `inspect_slide` | Get full slide content |
-| `inspect_block` | Get block configuration |
-| `get_master_variables` | List available variables |
-| `resolve_master` | Resolve all outdated blocks |
-| `resolve_block` | Force-resolve specific block |
-| `copy_slide` | Duplicate a slide |
-| `move_slide` | Reposition a slide |
-| `delete_slide` | Remove a slide |
+| [`get_master_summary`](tools/master.md#get_master_summary) | Get master outline with slides |
+| [`inspect_slide`](tools/master.md#inspect_slide) | Get full slide content |
+| [`inspect_block`](tools/master.md#inspect_block) | Get block configuration |
+| [`get_master_variables`](tools/master.md#get_master_variables) | List available variables |
+| [`resolve_master`](tools/master.md#resolve_master) | Resolve all outdated blocks |
+| [`resolve_block`](tools/master.md#resolve_block) | Force-resolve specific block |
+| [`copy_slide`](tools/master.md#copy_slide) | Duplicate a slide |
+| [`move_slide`](tools/master.md#move_slide) | Reposition a slide |
+| [`delete_slide`](tools/master.md#delete_slide) | Remove a slide |
 
 ### Element Tools
 
 | Tool | Description |
 |------|-------------|
-| `update_text_block` | Set text template and resolve |
-| `update_table_block` | Set table template and resolve |
-| `update_chart_block` | Generate chart from prompt |
-| `update_query_block` | Create/update query in block |
+| [`update_text_block`](tools/element.md#update_text_block) | Set text template and resolve |
+| [`update_table_block`](tools/element.md#update_table_block) | Set table template and resolve |
+| [`update_chart_block`](tools/element.md#update_chart_block) | Generate chart from prompt |
+| [`update_query_block`](tools/element.md#update_query_block) | Create/update query in block |
 
 ## Typical Workflow
 
