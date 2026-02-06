@@ -1,0 +1,17 @@
+{
+  "name": "motley-mcpb",
+  "version": "0.1.0",
+  "description": "MCP passthrough server for Motley data storytelling platform",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}

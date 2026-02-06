@@ -1,0 +1,46 @@
+{
+  "manifest_version": "0.3",
+  "name": "motley",
+  "display_name": "Motley",
+  "version": "0.1.0",
+  "description": "MCP passthrough for Motley data storytelling platform",
+  "author": {
+    "name": "James"
+  },
+  "license": "MIT",
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "MOTLEY_API_URL": "${user_config.api_url}",
+        "MOTLEY_API_KEY": "${user_config.api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "api_url": {
+      "type": "string",
+      "title": "Motley API URL",
+      "description": "URL of the Motley MCP endpoint",
+      "required": true,
+      "default": "https://localhost:5173/api/v1/mcp/"
+    },
+    "api_key": {
+      "type": "string",
+      "title": "API Key",
+      "description": "Motley API authentication key (starts with sk_)",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "tools_generated": true,
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  }
+}
