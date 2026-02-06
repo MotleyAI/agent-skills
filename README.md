@@ -39,11 +39,11 @@ Domain knowledge that helps Claude understand Motley's data model and write corr
 
 A complete set of tools for Claude to interact with Motley programmatically:
 
-- [**Master tools**](docs/tools/master.md) — inspect structure, variables, copy/move/delete slides
-- [**Layout tools**](docs/tools/layout.md) — browse templates, get thumbnails, create masters
-- [**Element tools**](docs/tools/element.md) — create and edit charts, tables, text blocks, queries
-- [**Datasource tools**](docs/tools/datasource.md) — explore data sources, add measures and dimensions
+- [**Datasource tools**](docs/tools/datasource.md) — explore and create data sources, add measures and dimensions
 - [**Outline tools**](docs/tools/outline.md) — plan deck structure with outline sessions
+- [**Layout tools**](docs/tools/layout.md) — browse templates, get thumbnails, create masters
+- [**Master tools**](docs/tools/master.md) — inspect structure, variables, copy/move/delete slides
+- [**Element tools**](docs/tools/element.md) — create and edit charts, tables, text blocks, queries
 
 ---
 
