@@ -140,8 +140,8 @@ sequenceDiagram
 ## Documentation
 
 - [Setup Guide](docs/setup.md) — Installation and configuration
-- [Skills Reference](docs/skills.md) — Complete skills documentation
-- [API Overview](docs/README.md) — Architecture and available MCP tools
+- [Skills Reference](docs/skills.md) — Domain knowledge for queries, charts, text, and tables
+- [MCP Tools Reference](docs/tools.md) — All 32 MCP tools with detailed argument documentation
 
 ---
 

@@ -100,7 +100,12 @@ The Motley MCP server provides 32 tools organized into five categories:
 | `update_chart_block` | Update chart with LLM prompt |
 | `update_query_block` | Create/update numerical query |
 
-See [tools.md](tools.md) for complete tool documentation with parameters and return values.
+See [tools.md](tools.md) for the complete tool reference with detailed documentation for each tool:
+- [Outline Tools](tools/outline.md) — Deck planning and outline sessions
+- [Layout Tools](tools/layout.md) — Layout libraries and master creation
+- [Datasource Tools](tools/datasource.md) — Data source management and schema modification
+- [Master Tools](tools/master.md) — Master inspection, resolution, and slide management
+- [Element Tools](tools/element.md) — Content block updates (text, table, chart, query)
 
 ## Skills Reference
 

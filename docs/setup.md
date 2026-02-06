@@ -146,5 +146,6 @@ Contact your Motley administrator to obtain an API key. Keys typically:
 ## Next Steps
 
 - Read the [Skills Reference](skills.md) to understand available capabilities
+- Review the [MCP Tools Reference](tools.md) for all 32 tool APIs
 - Review the [README](README.md) for an overview of features
 - Explore the skill documentation in the `skills/` directory
