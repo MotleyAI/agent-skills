@@ -30,19 +30,20 @@ Domain knowledge that helps Claude understand Motley's data model and write corr
 
 | Skill | What it does |
 |-------|--------------|
-| `create-query` | Build semantic layer queries with measures, dimensions, filters, and time intelligence |
-| `create-edit-chart` | Create bar, line, pie, and funnel charts with customizable styling |
-| `create-edit-text-block` | Generate data-driven text with variable substitution and optional LLM enhancement |
-| `create-edit-table-block` | Build formatted tables with pivoting and flexible layouts |
+| [`create-query`](docs/skills.md#create-query) | Build semantic layer queries with measures, dimensions, filters, and time intelligence |
+| [`create-edit-chart`](docs/skills.md#create-edit-chart) | Create bar, line, pie, and funnel charts with customizable styling |
+| [`create-edit-text-block`](docs/skills.md#create-edit-text-block) | Generate data-driven text with variable substitution and optional LLM enhancement |
+| [`create-edit-table-block`](docs/skills.md#create-edit-table-block) | Build formatted tables with pivoting and flexible layouts |
 
 ### MCP Server
 
 A complete set of tools for Claude to interact with Motley programmatically:
 
-- **Presentation tools** — inspect structure, variables, thumbnails
-- **Content tools** — create and edit charts, tables, text blocks
-- **Query tools** — configure data queries against your semantic layer
-- **Data tools** — explore available data sources and their schemas
+- [**Master tools**](docs/tools/master.md) — inspect structure, variables, copy/move/delete slides
+- [**Layout tools**](docs/tools/layout.md) — browse templates, get thumbnails, create masters
+- [**Element tools**](docs/tools/element.md) — create and edit charts, tables, text blocks, queries
+- [**Datasource tools**](docs/tools/datasource.md) — explore data sources, add measures and dimensions
+- [**Outline tools**](docs/tools/outline.md) — plan deck structure with outline sessions
 
 ---
 
