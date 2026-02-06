@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "motley": {
+      "type": "http",
+      "url": "https://stable.motley.ai:5173/api/v1/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${MOTLEY_API_KEY}"
+      }
+    }
+  }
+}
