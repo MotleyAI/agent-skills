@@ -58,4 +58,4 @@ Beyond the skills above, **frontend-slides** is a baseline skill for creating br
 
 ## MCP server
 
-Motley MCP provides a comprehensive set of tools allowing to inspect the semantic layer, create and update data models, create and modify documents, manage and resolve masters (document templates).
+Motley MCP provides a comprehensive set of tools that allow you to inspect the semantic layer, create and update data models, create and modify documents, manage and resolve masters (document templates).
