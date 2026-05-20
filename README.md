@@ -8,7 +8,7 @@ If you are looking for an open-source semantic layer, see [SLayer](https://githu
 
 [Motley](https://motley.ai) is a data storytelling platform that allows AI agents to create data-driven content, such as number-intensive reports, presentations, or notebooks.
 
-At the core of Motley is a semantic layer – inventory of the data you want to use with your agents. It contains metric definitions, column descriptions and other business context that lets the agent understand your data. Instead of stateless text-to-SQL, the agent writes the metrics it needs to the semantic layer, allowing to reuse them and trace where the data comes from.
+At the core of Motley is a semantic layer – an inventory of the data you want to use with your agents. It contains metric definitions, column descriptions and other business context that lets the agent understand your data. Instead of stateless text-to-SQL, the agent writes the metrics it needs to the semantic layer, allowing you to reuse them and trace where the data comes from.
 
 The second, complementary part is the document engine – the working surface where agents can create reusable artifacts pulling from the data. They can consist of text, data queries, charts, and tables, and are used on their own or as the basis for your data-driven content.
 
