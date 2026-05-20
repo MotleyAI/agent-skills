@@ -1,161 +1,61 @@
-# Motley Agent Skills & MCP Server
+# Motley agent skills & MCP server
 
-**Build data-driven reports and presentations with AI — without sacrificing accuracy or control.**
+Skills for making your AI agent a reliable data analyst on top of your data via the [Motley](https://motley.ai) platform.
 
-This package provides Claude with the skills and tools to create professional reports using [Motley](https://motley.ai), where generative AI meets deterministic, auditable data pipelines.
-
----
+If you are looking for an open-source semantic layer, see [SLayer](https://github.com/MotleyAI/slayer).
 
 ## What is Motley?
 
-Motley enables **number-intensive reporting that combines the ease of use of Generative AI with the robustness and transparency of deterministic configs**.
+[Motley](https://motley.ai) is a data storytelling platform that allows AI agents to create data-driven content, such as number-intensive reports, presentations, or notebooks.
 
-Instead of hoping your AI gets the numbers right, Motley gives you:
+At the core of Motley is a semantic layer – inventory of the data you want to use with your agents. It contains metric definitions, column descriptions and other business context that lets the agent understand your data. Instead of stateless text-to-SQL, the agent writes the metrics it needs to the semantic layer, allowing to reuse them and trace where the data comes from.
 
-- **A declarative DSL** for charts, tables, queries, and data-driven text — with powerful expressions and cross-references between elements
-- **A flexible semantic layer** for business-relevant queries (use ours, import from your BI tool, or bring your own)
-- **Tightly controlled LLM calls** for text generation that cite their sources and respect your data
-- **Export anywhere** — Google Slides, PowerPoint, and HTML while preserving your original styling
-- **Full MCP integration** so your AI assistant can create and manipulate everything programmatically
+The second, complementary part is the document engine – the working surface where agents can create reusable artifacts pulling from the data. They can consist of text, data queries, charts, and tables, and are used on their own or as the basis for your data-driven content.
 
-The result: reports that are both AI-assisted *and* trustworthy.
+## Quickstart
 
----
+To get started, you need a [Motley](https://motley.ai) account connected to a datasource. You can sign up for free and use the built-in demo datasource if you don't have one.
 
-## What's in This Package?
+Once installed, invoke the `/create-report` skill to create your first data-driven document.
 
-### Skills
+### Claude Code
 
-Domain knowledge that helps Claude understand Motley's MCP tools and build data-driven presentations:
+Add the marketplace and install the plugin:
+
+```
+/plugin marketplace add MotleyAI/motley-skills
+/plugin install motley@motley-plugins
+```
+
+Then run `/mcp`, select the **motley** server, and authenticate in your browser to connect your Motley account.
+
+### Claude Cowork
+
+1. Open the **Customize** tab and go to **Personal plugins**.
+2. **Add marketplace** and enter `MotleyAI/motley-skills`.
+3. Enable **auto updates** so you always get the latest skills.
+4. **Install** the Motley plugin.
+5. **Authenticate** the Motley connector — sign in to your Motley account in the browser when prompted.
+
+If you are an organization admin, you can [install](https://support.claude.com/en/articles/13837433-manage-claude-cowork-plugins-for-your-organization) the plugin for everyone in your organization.
+
+## Skills
+
+This repo contains skills teaching your agent to work with documents and to manage the semantic layer.
+
+Skills available:
 
 | Skill | What it does |
 |-------|--------------|
-| [`master-builder`](docs/skills.md#master-builder) | End-to-end workflow for creating a data-driven master |
-| [`update-chart`](docs/skills.md#update-chart) | Create bar, line, pie, and funnel charts via natural language prompts |
-| [`update-text-block`](docs/skills.md#update-text-block) | Generate data-driven text with variable substitution and optional LLM enhancement |
-| [`update-table-block`](docs/skills.md#update-table-block) | Build formatted tables with size constraints and flexible layouts |
-| [`update-query-block`](docs/skills.md#update-query-block) | Create data queries for text and table blocks |
-| [`explore-model`](docs/skills.md#explore-model) | Explore models, inspect schemas, create custom models/measures |
-| [`layout-library-sync`](docs/skills.md#layout-library-sync) | Import Google Slides and sync content from reference masters |
+| `create-report` | End-to-end workflow for building a data-driven document from your data and requirements. This is the main entry point. |
+| `explore-model` | Discover and inspect the models in your semantic layer — and create custom models or measures — before building a document. |
+| `update-text-block` | Create or edit text blocks with template variables, data substitution, or LLM-generated copy. |
+| `update-table-block` | Create or edit table blocks, with optional size constraints and query-, template-, or LLM-driven content. |
+| `update-chart` | Create or edit charts (bar, line, pie, funnel) from a structured query and chart configuration. |
+| `update-query-block` | Define the numerical queries that feed text and table blocks, referenced as `{query_name}` in their templates. |
 
-### MCP Server
+Beyond the skills above, **frontend-slides** is a baseline skill for creating branded, self-contained HTML reports and presentations locked to your visual identity — zero dependencies, no build tooling required. On first use, invoke it to run the brand wizard and configure your brand styles; every presentation after that is automatically on-brand.
 
-A complete set of tools for Claude to interact with Motley programmatically:
+## MCP server
 
-- [**Model tools**](docs/tools/model.md) — explore and create models, add measures and dimensions
-- [**Outline tools**](docs/tools/outline.md) — plan deck structure with outline sessions
-- [**Layout tools**](docs/tools/layout.md) — browse templates, get thumbnails, create masters
-- [**Master tools**](docs/tools/master.md) — inspect structure, variables, copy/move/delete slides
-- [**Element tools**](docs/tools/element.md) — create and edit charts, tables, text blocks, queries
-
----
-
-## Quick Start
-
-### Option 1: Skills Only (via skills.sh)
-
-```bash
-npx skills add MotleyAI/agent-skills -a claude-code
-```
-
-### Option 2: Claude Desktop Extension
-
-Download the `.mcpb` file from [Releases](https://github.com/MotleyAI/agent-skills/releases) and drag it into Claude Desktop.
-
-### Option 3: Claude Code with MCP
-
-```bash
-export MOTLEY_API_KEY="sk_your_key_here"
-claude --plugin-dir /path/to/agent-skills
-```
-
-See [docs/setup.md](docs/setup.md) for detailed instructions.
-
----
-
-## How It Works
-
-```mermaid
-flowchart LR
-    subgraph AI["🤖 AI Assistant"]
-        Claude["Claude"]
-        Skills["Skills"]
-        MCP["MCP Tools"]
-    end
-
-    subgraph Motley["⚙️ Motley Engine"]
-        DSL["Declarative DSL"]
-        Semantic["Semantic Layer"]
-    end
-
-    subgraph Export["📄 Output"]
-        Slides["Google Slides"]
-        PPT["PowerPoint"]
-        HTML["HTML"]
-    end
-
-    subgraph Data["💾 Your Data"]
-        DB[(Database)]
-        BI["BI Tools"]
-    end
-
-    Claude --> Skills
-    Claude --> MCP
-    Skills --> DSL
-    MCP --> DSL
-    DSL --> Semantic
-    Semantic --> DB
-    Semantic --> BI
-    DSL --> Slides
-    DSL --> PPT
-    DSL --> HTML
-
-    style AI fill:#e8f4f8,stroke:#0891b2
-    style Motley fill:#fef3c7,stroke:#d97706
-    style Export fill:#dcfce7,stroke:#16a34a
-    style Data fill:#f3e8ff,stroke:#9333ea
-```
-
-### The Flow
-
-```mermaid
-sequenceDiagram
-    participant You
-    participant Claude
-    participant Motley
-    participant Data
-    participant Export
-
-    You->>Claude: "Create a quarterly revenue report<br/>with regional breakdown"
-    Claude->>Claude: Uses skills to write<br/>correct Motley DSL
-    Claude->>Motley: Creates report via MCP tools
-    Motley->>Data: Executes queries<br/>deterministically
-    Data-->>Motley: Returns results
-    Motley-->>Claude: Preview ready
-    Claude-->>You: "Here's your report"
-    You->>Motley: Export
-    Motley->>Export: Google Slides /<br/>PowerPoint / HTML
-```
-
-**Every number is traceable. Every chart is reproducible. Every report is auditable.**
-
----
-
-## Documentation
-
-- [Setup Guide](docs/setup.md) — Installation and configuration
-- [Skills Reference](docs/skills.md) — Domain knowledge for queries, charts, text, and tables
-- [MCP Tools Reference](docs/tools.md) — All 35 MCP tools with detailed argument documentation
-
----
-
-## Learn More
-
-- **Website:** [motley.ai](https://motley.ai)
-- **Questions?** Open an issue or [book a demo](https://motley.ai/book-a-demo)
-
----
-
-## License
-
-MIT
+Motley MCP provides a comprehensive set of tools allowing to inspect the semantic layer, create and update data models, create and modify documents, manage and resolve masters (document templates).
