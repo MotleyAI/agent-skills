@@ -1,6 +1,6 @@
 # Motley agent skills & MCP server
 
-Skills for making your AI agent a reliable data analyst on top of your data via the [Motley](https://motley.ai) platform.
+Skills that make your AI agent a reliable data analyst on top of your data via the [Motley](https://motley.ai) platform.
 
 If you are looking for an open-source semantic layer, see [SLayer](https://github.com/MotleyAI/slayer).
 
