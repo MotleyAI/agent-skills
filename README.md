@@ -41,7 +41,7 @@ If you are an organization admin, you can [install](https://support.claude.com/e
 
 ## Skills
 
-This repo contains skills teaching your agent to work with documents and to manage the semantic layer.
+This repo contains skills that teach your agent to work with documents and to manage the semantic layer.
 
 Skills available:
 
