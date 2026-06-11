@@ -184,7 +184,7 @@ Performance Metrics:
 3. **Use formatting functions** (`{percent(...)}`, `{integer(...)}`) over raw arithmetic when displaying values
 4. **Do NOT place `%` after a variable**: Use `{percent(x)}` instead of `{x}%`
 5. **Every `{variable}` must resolve**: Either to a query block name or a context variable
-6. **Verify available variables**: Use `get_master_variables(master_id=..., show_context_vars=true)` to check
+6. **Verify available variables**: Use `get_doc_variables(doc_id=..., show_context_vars=true)` to check
 
 ---
 

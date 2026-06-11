@@ -96,20 +96,24 @@ Use this for status labels, categories, or any content that must be one of a fix
 
 Create query blocks first, then set the text template:
 
-1. Create the data queries:
+1. Create the data queries (SLayer schema — see `update-query-block` for full details):
    ```
    update_query_block(
-       parent_location={doc_id: 42, slide_name: "Overview", block_name: "summary_text"},
+       parent_location={doc_id: 42, block_name: "summary_text"},
        query_name="total_revenue",
-       prompt="Total revenue for the reporting period",
-       model_name="revenue"
+       query={"subqueries": [{
+         "source_model": "orders",
+         "measures": ["revenue:sum"]
+       }]}
    )
 
    update_query_block(
-       parent_location={doc_id: 42, slide_name: "Overview", block_name: "summary_text"},
+       parent_location={doc_id: 42, block_name: "summary_text"},
        query_name="customer_count",
-       prompt="Number of active customers",
-       model_name="customers"
+       query={"subqueries": [{
+         "source_model": "customers",
+         "measures": ["active_customer_count"]
+       }]}
    )
    ```
 

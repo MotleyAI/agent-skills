@@ -1,166 +1,240 @@
 # Model Guide
 
-This document covers data modeling concepts for working with models in Motley. The MCP tools handle query construction internally via LLM — you describe what data you want in natural language prompts. This guide helps you understand what's expressible.
+This document covers data-model concepts for working with **SLayer** models in Motley. Use it as a reference when authoring queries, charts, and saved measures.
+
+> Motley migrated its semantic layer from Cube to **SLayer**. Models tagged `*(backend: slayer)*` in `models_summary` use the SLayer schema below. Legacy Cube-format data sources are still **inspectable** (they appear in `models_summary` under "legacy Cube" and `inspect_model` shows their schema), but their **queries no longer run on the SLayer engine**: existing decks built on Cube must be migrated first via `POST /admin/slayer/migrate-deck` or they'll fail at resolution time with `UnsupportedQueryFormatError`. All new authoring (charts, queries, measures, joins) uses the SLayer schema documented here.
 
 ## Concepts
 
 ### Models
 
-A **model** is a data model backed by a SQL query or table. Each model has:
-- **Measures** — aggregate values (revenue, count, average)
-- **Dimensions** — grouping/filtering columns (region, status, category)
-- **Derived dimensions** — computed columns from sub-queries
+A **SLayer model** is a logical data view backed by a SQL query or table. Each model has:
 
-Use `models_summary()` to list all available models and their schemas, or `models_summary(verbose=false)` for a compact name-only listing.
-Use `inspect_model(model_name=..., num_rows=3)` to see sample data.
+- **Columns** (dimensions) — row-level values, each with a SQL type (`TEXT`, `DOUBLE`, `TIMESTAMP`, `BOOLEAN`, `INTEGER`, …).
+- **Saved measures** — named DSL formulas that aggregate columns (`revenue:sum`, `change_pct(revenue:sum)`, etc.).
+- **Joins** — declarative links to other models in the same source, expressed as column pairs.
+- **Derived columns** — columns whose own SQL is a SQL expression; SLayer inlines them at query time.
 
-### Measures
+Use `models_summary()` to list everything (`models_summary(verbose=false)` for compact output), and `inspect_model(model_name=..., num_rows=3)` to see schema + sample data.
 
-Measures are aggregate columns. Each has a type that defines how it's aggregated.
+### Columns
 
-| Type | Description | Example |
-|------|-------------|---------|
-| `count` | Count of rows | Total orders |
-| `count_distinct` | Count of unique values | Unique customers |
-| `count_distinct_approx` | Approximate count distinct (faster) | Approximate unique visitors |
-| `sum` | Sum of values | Total revenue |
-| `avg` | Average of values | Average order value |
-| `min` | Minimum value | Earliest date |
-| `max` | Maximum value | Latest date |
-| `number` | Pre-computed numeric expression | Ratio, percentage |
+Joined columns surface in MCP listings two ways:
+- In `inspect_model` they appear with a double-underscore prefix (`customers__name`).
+- In query DSL you reference them with **dotted notation** (`customers.name`, `customers.regions.name` for multi-hop).
+
+Both forms refer to the same thing.
+
+### Measures (the DSL)
+
+SLayer separates **measures** (row-level expressions saved on a model) from **aggregations** (chosen at query time via colon syntax). The colon syntax is the heart of the DSL:
+
+| Expression | Meaning |
+|---|---|
+| `*:count` | `COUNT(*)` — always available, no column needed |
+| `revenue:sum` | `SUM(revenue)` |
+| `revenue:avg` | `AVG(revenue)` |
+| `revenue:min` / `:max` | extremes |
+| `customer_id:count_distinct` | `COUNT(DISTINCT customer_id)` |
+| `revenue:stddev_samp`, `revenue:var_pop` | statistical aggs |
+| `revenue:sum(window='30d')` | trailing 30-day SUM (requires a `time_dimensions` entry) |
+| `revenue:sum / *:count` | arithmetic on aggregated measures |
+| `(revenue:sum - cost:sum) / *:count` | parenthesized arithmetic |
+| `customers.score:avg` | aggregation across a join |
+
+#### Transform functions
+
+Functions wrap aggregated measures with window operations:
+
+| Function | What it does | Requires time dim |
+|---|---|---|
+| `cumsum(x)` | Running total over time | yes |
+| `change(x)` | Δ vs previous period | yes |
+| `change_pct(x)` | % change vs previous period | yes |
+| `time_shift(x, n)` | Value N periods back/ahead | yes |
+| `lag(x, n)` / `lead(x, n)` | Row-position shift (window functions) | yes |
+| `first(x)` / `last(x)` | Broadcast first/last bucket's value | yes |
+| `consecutive_periods(predicate)` | Trailing run length where `predicate` is true | yes |
+| `rank(x)` | Descending rank | no |
+| `dense_rank(x)` | Descending rank, no gaps | no |
+| `percent_rank(x)` | Normalized rank in `[0, 1]` | no |
+| `ntile(x, n=N)` | Bucket rows into N equal groups | no |
+
+Rank-family transforms accept an optional `partition_by=` referencing query dimensions (`rank(revenue:sum, partition_by=region)`).
+
+Common composition: top-N via `"filters": ["rank(revenue:sum) <= 10"]`.
 
 ### Dimensions
 
-Dimensions are grouping/filtering columns.
+Group-by columns. In a query:
 
-| Type | Description | Examples |
-|------|-------------|----------|
-| `string` | Text values | Region, product name, status |
-| `time` | Timestamps with granularity support | Created at, order date |
-| `date` | Date values | Birth date, start date |
-| `boolean` | True/false values | Is active, has subscription |
-| `number` | Numeric values (non-aggregated) | Age, employee count |
+```json
+"dimensions": ["status", "customers.name", "customers.regions.name"]
+```
 
-### Time Granularities
+Plain string names; dotted notation for joined columns. SLayer auto-resolves the joins.
 
-Time dimensions can be grouped at different granularities:
+For inline date truncation without a separate `time_dimensions` entry, use the transform syntax: `"created_at:month"` as a dimension.
 
-| Granularity | Description | Example output |
-|-------------|-------------|----------------|
-| `DAY` | Daily | 2025-01-15 |
-| `WEEK` | Weekly (start of week) | 2025-01-13 |
-| `MONTH` | Monthly | 2025-01 |
-| `QUARTER` | Quarterly | Q1 2025 |
-| `YEAR` | Yearly | 2025 |
+### Time dimensions
+
+```json
+"time_dimensions": [{"column": "created_at", "granularity": "month"}]
+```
+
+Granularities: `second`, `minute`, `hour`, `day`, `week`, `month`, `quarter`, `year`.
+
+**The document's `start_date`/`end_date` variables automatically bound the time range** — do not inline `date_range` inside `time_dimensions`. Set them via `set_doc_variables`.
+
+### Filters (DSL strings)
+
+Filters are plain strings, AND-ed together when you provide multiple entries:
+
+```json
+"filters": [
+  "status = 'completed'",
+  "amount > 100",
+  "category in ('A', 'B', 'C')",
+  "name like '%enterprise%'",
+  "discount IS NOT NULL",
+  "rank(revenue:sum) <= 10",        // computed-column / transform filter
+  "customer_name = '{customer_name}'"  // {var} substituted from doc variables
+]
+```
+
+Operators: `=`, `<>`, `>`, `>=`, `<`, `<=`, `in`, `like`, `not like`, `IS NULL`, `IS NOT NULL`. Boolean logic inside a single string: `and`, `or`, `not`.
+
+String-hygiene functions allowed inside filter strings: `lower`, `upper`, `trim`, `replace`, `substr`, `instr`, `length`, `concat` (and the `||` concat operator, auto-rewritten). All lowercase.
+
+`{variable_name}` placeholders are substituted from the document's variables at resolution time. Quote string values inside the template: `"status = '{status}'"`.
+
+Joined-column filters auto-resolve: `"customers.region = 'EU'"` adds the implied join automatically.
 
 ## Dimension Constraints for Charts
 
-When writing chart prompts, be aware of these constraints on the underlying query:
+When a query is rendered as a chart, the underlying SLayer query is subject to these dimension limits:
 
-| Dimensions | Time Dimensions | Total | Measures Allowed |
-|------------|-----------------|-------|------------------|
+| Plain dims | Time dims | Total | Measures allowed |
+|---:|---:|---:|---|
 | 0 | 0 | 0 | Multiple |
 | 1 | 0 | 1 | Multiple |
 | 0 | 1 | 1 | Multiple |
 | 2 | 0 | 2 | Exactly 1 |
 | 1 | 1 | 2 | Exactly 1 |
 
-- Time dimensions count toward the total dimension count
-- With 2 total dimensions, the second dimension is pivoted into series on the chart
-- Maximum 2 total dimensions for charts
+With 2 total dimensions, the second is pivoted into series. Max 2 dimensions for charts.
 
-These constraints are enforced by the backend — if your chart prompt implies more than 2 dimensions, the LLM will simplify. But knowing these limits helps you write better prompts.
+## Number Format Options (chart_details / measures)
 
-## Filter Concepts
+| Format | Description | Example |
+|---|---|---|
+| `integer` | Whole number | `1,234` |
+| `float` | Decimal | `1,234.56` |
+| `currency` | Currency with symbol | `$1,234.56` |
+| `percent` | Percentage | `45.2%` |
 
-When writing prompts for `update_chart_block` or `update_query_block`, you can express filters in natural language. The LLM translates them to the appropriate filter types:
+For count-style measures use `integer` — otherwise they render as `13.0`.
 
-- **Value filters**: "only active customers", "where region is North America"
-- **Time filters**: "for the last 12 months", "year to date", "Q4 2025"
-- **Comparison filters**: "where revenue > 1000", "with at least 5 orders"
-- **Null checks**: "where email is set", "excluding empty values"
-- **String matching**: "names starting with A", "containing 'enterprise'"
-- **Composite filters**: "active customers in North America OR Europe"
-- **Period-to-date**: "year to date", "quarter to date", "month to date"
-- **Future ranges**: "next 3 months" (negative count internally)
-- **Date ranges**: "between January 2025 and March 2025"
+## Editing SLayer Models
 
-The query LLM also automatically applies customer and time range filters from the master's `sample_parameters` when relevant.
+The old single-shot `create_model` / `edit_model` tools are gone. Edits are now split per concern:
 
-## Format Options
-
-When creating custom measures with `edit_model`, you can specify display formats:
-
-| Format | Description | Example output |
-|--------|-------------|----------------|
-| `percent` | Percentage | 45.2% |
-| `currency` | Currency with symbol | $1,234.56 |
-| `integer` | Whole number | 1,234 |
-| `float` | Decimal number | 1,234.56 |
-
-## Creating Custom Models and Measures
-
-### Custom Models
-
-Use `create_model` when existing models don't have the data you need:
+### Model-level metadata
 
 ```
-create_model(
-    model_name="monthly_summary",      -- name for new model
-    sql="SELECT DATE_TRUNC('month', created_at) AS month, COUNT(*) AS order_count, SUM(amount) AS total FROM orders GROUP BY 1",
-    column_descriptions=[
-        {"name": "month", "description": "Order month"},
-        {"name": "order_count", "description": "Number of orders"},
-        {"name": "total", "description": "Total revenue"}
-    ],
-    datasource_name="my_datasource"    -- optional if only one datasource exists
+patch_model(
+  source_id=..., model_name="orders",
+  description="Orders fact table",
+  default_time_dimension="created_at",
+  hidden=false,
+  filters=["is_test = false"]      # always-applied WHERE filters
 )
 ```
 
-### Editing a Model — Custom Measures, Dimensions, and Deletion
+All fields optional — only what you pass is changed.
 
-Use `edit_model` to add computed measures, add computed dimensions, and/or delete existing measures/dimensions:
+### Column metadata
 
 ```
-edit_model(
-    model_name="orders",
-    measures=[
-        {
-            "name": "active_count",
-            "sql": "CASE WHEN status = 'active' THEN 1 ELSE 0 END",
-            "type": "sum",
-            "description": "Count of active orders"
-        },
-        {
-            "name": "avg_order_value",
-            "sql": "amount",
-            "type": "avg",
-            "format": "currency",
-            "description": "Average order value"
-        }
-    ],
-    dimensions=[
-        {
-            "name": "order_size_bucket",
-            "sql": "CASE WHEN amount < 100 THEN 'Small' WHEN amount < 1000 THEN 'Medium' ELSE 'Large' END",
-            "type": "string",
-            "description": "Order size category"
-        }
-    ],
-    delete_names=["old_measure", "unused_dimension"]
+patch_column(
+  source_id=..., model_name="orders",
+  column_name="amount",
+  patch={"description": "Gross amount in USD", "label": "Amount"}
 )
 ```
 
-All parameters except `model_name` are optional — include only what you need.
+### Saved measures
 
-## Tips for Master Building
+```
+# Sanity-check the DSL (no DB roundtrip):
+validate_formula(
+  source_id=..., model_name="orders",
+  kind="measure",
+  expression="revenue:sum / *:count"
+)
 
-1. **Always inspect models first**: Run `models_summary()` then `inspect_model(model_name=..., num_rows=3)` on relevant models before writing any prompts
-2. **Know exact names**: Use the exact measure/dimension names from the schema in your prompts for clarity
-3. **Check data quality**: Look at sample rows to understand value formats, null patterns, and data ranges
-4. **Mention the model**: When writing prompts for `update_chart_block` or `update_query_block`, specify `model_name` if you know which model to use — this constrains the LLM to that model's schema
+# Create:
+create_measure(
+  source_id=..., model_name="orders",
+  create={
+    "name": "aov",
+    "formula": "revenue:sum / *:count",
+    "label": "Average Order Value",
+    "description": "Average revenue per order"
+  }
+)
 
-## Related Documentation
+# Read:
+list_measures(source_id=..., model_name="orders")
+get_measure(source_id=..., model_name="orders", measure_name="aov")
+
+# Edit:
+patch_measure(source_id=..., model_name="orders", measure_name="aov",
+              patch={"description": "Avg revenue per order", "label": "AOV"})
+
+# Delete:
+delete_measure(source_id=..., model_name="orders", measure_name="aov")
+```
+
+### Joins
+
+```
+create_join(
+  source_id=..., model_name="orders",
+  create={
+    "target_model": "customers",
+    "join_pairs": [["customer_id", "id"]],   # [[src_col, tgt_col], ...]
+    "join_type": "left"                       # "left" (default) | "inner"
+  }
+)
+
+list_joins(source_id=..., model_name="orders")
+get_join(source_id=..., model_name="orders", target_model="customers")
+patch_join(source_id=..., model_name="orders", target_model="customers",
+           patch={"join_pairs": [["customer_uuid", "id"]]})
+delete_join(source_id=..., model_name="orders", target_model="customers")
+```
+
+### Whole models
+
+```
+delete_model(model_name="my_test_model")
+```
+
+Fails if the model is auto-generated or referenced by another model's join.
+
+> There is no tool for creating a fresh SLayer model from raw SQL via MCP in this build — sources arrive pre-populated. Edits happen on the saved measures, columns, joins, and model metadata.
+
+## Tips
+
+1. **Inspect first.** Run `models_summary(verbose=false)` then `inspect_model(model_name=..., num_rows=3)` on each model you'll use — confirm exact names and check sample data.
+2. **Save common formulas as measures.** Declaring `aov = revenue:sum / *:count` once via `create_measure` keeps queries terse and consistent.
+3. **Validate DSL before committing.** `validate_formula` is a cheap parse check.
+4. **Time-window transforms need time dims.** `cumsum`, `change`, `lag`, `lead`, `first`, `last`, `time_shift`, `consecutive_periods` all require an explicit `time_dimensions` entry. Set `default_time_dimension` via `patch_model` to make this implicit when there are 2+ candidates.
+5. **Joins are auto-resolved.** Once `create_join` is in place, queries reach across with dotted notation (`customers.name` from `orders`) — no need to also list the join.
+
+## Related
 
 - For exploring models: see the `explore-model` skill
-- For creating queries within blocks: see the `update-query-block` skill
+- For authoring queries within blocks: see `update-query-block`
+- For charts: see `update-chart`
