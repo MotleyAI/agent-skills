@@ -53,7 +53,7 @@ inspect_model(model_name="revenue", num_rows=3)
 inspect_model(model_name="customers", num_rows=3)
 ```
 
-If the existing models don't have the data you need, you can create custom models from SQL (`create_model`), or add computed measures/dimensions to existing models (`edit_model`). See the `explore-model` skill for details.
+If existing models don't have the data you need, you can declare new saved measures on the model via `create_measure`, edit measure formulas with `patch_measure`, or declare joins with `create_join`. Use `validate_formula` to syntax-check DSL expressions before committing. See the `explore-model` skill for the full model-edit toolkit.
 
 ### Ask questions
 
@@ -81,6 +81,11 @@ create_document(
 
 You need to provide the `source_id` of the models you are going to use. Currently, all the models in a document must
 come from a single source. The `source_id` can be found in outputs of `models_summary` and `inspect_model` tools.
+
+### Document lifecycle
+
+- `rename_document(document_id=<id>, new_name="<new title>")` — change a document's title. Empty/whitespace-only names are rejected.
+- `delete_document(document_id=<id>)` — soft-delete. The document is hidden from `list_resources(what="documents")` and `inspect_document` returns a 404 afterwards. Idempotent on already-deleted docs (also returns 404).
 
 ### Set Context Variables
 
@@ -113,26 +118,44 @@ Creating blocks and updating them is done using the tools:
 Each block must have a unique name by which it can be referenced.
 To create a new block provide a new, unique name.
 
+Other block operations: `move_block` (reorder), `rename_block` (rename in place, updates references), `delete_block` (remove a block), `delete_query` (remove a child query from its parent).
+
+### Scratch lookups
+
+Before authoring a query/chart block, use `run_query` to sanity-check the data without persisting anything:
+
+```
+run_query(
+    source_id=<id>,
+    query={"subqueries": [{"source_model": "orders", "measures": ["created_at:min", "created_at:max", "*:count"]}]},
+    limit=5
+)
+```
+
+Useful for: confirming a column exists and has data, finding the date range, sanity-checking a measure formula, picking sensible default `start_date`/`end_date` for the document. Same query shape as `update_query_block` / `update_chart_block`; no block is created, no document is touched. Optional `variables={"name": "value"}` resolves `{var}` placeholders in filters.
+
 #### Chart Blocks
+
+Queries use the **SLayer** schema — measure/filter formulas are DSL strings, wrapped in `subqueries`:
 
 ```
 update_chart_block(
     location={doc_id: <id>, slide_name: "<slide>", block_name: "<chart_block>"},
     query={
-        measures: [{name: "total_revenue", cube_name: "revenue"}],
-        time_dimension: {
-            dimension: {name: "created_at", cube_name: "revenue"},
-            granularity: "month"
-        },
-        limit: 12,
-        order: [{column: {name: "created_at", cube_name: "revenue"}, order: "ASC"}]
+        "subqueries": [{
+            "source_model": "orders",
+            "measures": ["revenue:sum"],
+            "time_dimensions": [{"column": "created_at", "granularity": "month"}],
+            "order": [{"column": "created_at", "direction": "asc"}]
+        }]
     },
     chart_details={
-        series_default: {type: "LINE", y_axis: "left", number_format: {style: "currency"}, show_values: false},
-        x_axis: {lines: false, label: false},
-        y_axis: {lines: true, label: "Revenue"},
-        y_right_axis: {lines: false},
-        title: "Monthly Revenue"
+        "title": "Monthly Revenue",
+        "series_default": {"type": "line", "y_axis": "left",
+                           "number_format": {"type": "currency", "symbol": "$", "precision": 0}},
+        "xAxis": {"label": false, "lines": false},
+        "yAxis": {"label": "Revenue", "lines": true},
+        "legend": {"enabled": false}
     }
 )
 ```

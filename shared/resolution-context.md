@@ -31,8 +31,6 @@ Always discover what's actually available for the current document with:
 get_doc_variables(doc_id=..., show_context_vars=true)
 ```
 
-(For masters: `get_master_variables(master_id=..., show_context_vars=true)`.)
-
 The response lists every variable the document can resolve — universal date keys plus whatever source-specific keys the source has declared.
 
 ## Using in Templates
@@ -54,11 +52,12 @@ These variables are available alongside query block results — no query block i
 
 ## How Context Flows to Queries
 
-When you write prompts for `update_query_block` or `update_chart_block`, the query-generating LLM automatically has access to:
-- The document's resolved parameters (to generate appropriate time filters and any source-specific filters)
-- The cube schema (to pick the right measures/dimensions)
+`update_query_block` and `update_chart_block` take a fully structured **SLayer** query — you build the `subqueries[...]` shape yourself (see the `update-query-block` skill). Context variables flow into that query in two ways:
 
-You don't need to manually specify filters for `start_date` / `end_date` — the query LLM handles them. The same goes for source-specific filters that the source declares; mention the intent in your prompt (e.g. "for the current reporting period" or "for the selected customer") and the query LLM applies the relevant default filter.
+- **Date range.** The document's `start_date` / `end_date` are automatically applied to the query's `time_dimensions` — you don't need to inline a date range. The doc's `whole_periods_only` default (true) snaps to bucket boundaries and excludes the current incomplete bucket.
+- **Source-specific filters.** When the source declares default filters parametrized by variables (e.g. `customer_name`, `client_name`), they auto-apply to every query on that source. Set their values with `set_doc_variables`; the query block's own `filters` then compose with the source defaults.
+
+You can also reference any doc variable explicitly inside your own filter strings via `{variable_name}` placeholders, e.g. `"filters": ["customer_name = '{customer_name}'"]`.
 
 ## Related Documentation
 
