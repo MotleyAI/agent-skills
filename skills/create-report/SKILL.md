@@ -1,8 +1,10 @@
 ---
 name: create-report
 description: >
-  Create a report using Motley.
-
+  Create a data-driven report as a Motley document. Explore the semantic
+  layer, author queries, charts, tables, and text blocks, then iterate
+  with the user. Use when the user asks for a report, analysis, or any
+  data-driven document built on their data.
 ---
 
 # Create Report
@@ -32,28 +34,69 @@ Enter plan mode.
 
 Make sure you understand **why** the user wants to create this report, **what** exactly they want to show.
 
-### Explore Models
+### Learn the query language
 
-Data is central to the report generation. It can be used both for charts and inline queries
+If Motley is unfamiliar, read the built-in help first:
+
+```
+inspect(reference="memory:help.intro", entity_type="memory")
+```
+
+It covers the core concepts, the query shape, and the common gotchas, and lists
+deep-dive topics (`memory:help.queries`, `memory:help.formulas`, `memory:help.time`, ...)
+readable the same way.
+
+### Explore the data
+
+Data is central to the report. It can be used both for charts and inline queries
 embedded in the text.
 
-The purpose of this step is to find the relevant data for the queries and charts that should be in the report.
-Data is represented as models (data models), containing measures and dimensions, that can be queried.
-
-Understand what models are available:
+Start with `search` — it ranks models, columns, measures, and saved memories
+(notes from earlier sessions, often carrying a known-good example query) in one call:
 
 ```
-models_summary()
+search(question="how do we measure revenue?")
 ```
 
-Then inspect relevant models to see measures, dimensions, and sample data:
+Then list and inspect models to see columns, measures, and sample data:
 
 ```
-inspect_model(model_name="revenue", num_rows=3)
-inspect_model(model_name="customers", num_rows=3)
+inspect(entity_type="model")                                   # list all models
+inspect(reference="orders", entity_type="model", num_rows=3)   # one model in detail
 ```
 
-If existing models don't have the data you need, you can declare new saved measures on the model via `create_measure`, edit measure formulas with `patch_measure`, or declare joins with `create_join`. Use `validate_formula` to syntax-check DSL expressions before committing. See the `explore-model` skill for the full model-edit toolkit.
+To find the `source_id` of a datasource, use `list_resources(what="datasources")`.
+
+If existing models don't have the data you need, extend them with `edit_model` —
+it upserts measures, columns, and joins in one atomic, validated call:
+
+```
+edit_model(
+    model_name="orders",
+    measures=[{"name": "aov", "formula": "revenue:sum / *:count"}]
+)
+```
+
+Use `validate_formula(model_name="orders", kind="measure", expression="...")` to
+syntax-check DSL expressions before committing.
+
+### Scratch lookups
+
+Sanity-check the data with the `query` tool before authoring blocks — nothing is persisted:
+
+```
+query(
+    query={"subqueries": [{"source_model": "orders",
+                           "measures": ["created_at:min", "created_at:max", "*:count"]}]},
+    limit=5
+)
+```
+
+Useful for: confirming a column exists and has data, finding the date range,
+sanity-checking a measure formula, picking sensible default `start_date`/`end_date`
+for the document. Same query shape as the block tools below; no block is created,
+no document is touched. Optional `variables={"name": "value"}` resolves `{var}`
+placeholders in filters.
 
 ### Ask questions
 
@@ -79,11 +122,13 @@ create_document(
 )
 ```
 
-You need to provide the `source_id` of the models you are going to use. Currently, all the models in a document must
-come from a single source. The `source_id` can be found in outputs of `models_summary` and `inspect_model` tools.
+The document starts blank, as a single-slide deck. You need to provide the
+`source_id` of the models you are going to use. Currently, all the models in a
+document must come from a single source.
 
 ### Document lifecycle
 
+- `inspect_document(doc_id=<id>)` — outline (slide and block names); add `slide_name` / `block_name` for detail.
 - `rename_document(document_id=<id>, new_name="<new title>")` — change a document's title. Empty/whitespace-only names are rejected.
 - `delete_document(document_id=<id>)` — soft-delete. The document is hidden from `list_resources(what="documents")` and `inspect_document` returns a 404 afterwards. Idempotent on already-deleted docs (also returns 404).
 
@@ -118,29 +163,30 @@ Creating blocks and updating them is done using the tools:
 Each block must have a unique name by which it can be referenced.
 To create a new block provide a new, unique name.
 
+Block locations are `{doc_id: <id>, block_name: "<name>"}` — `slide_name` is only
+needed for multi-slide decks.
+
 Other block operations: `move_block` (reorder), `rename_block` (rename in place, updates references), `delete_block` (remove a block), `delete_query` (remove a child query from its parent).
 
-### Scratch lookups
+### The query shape
 
-Before authoring a query/chart block, use `run_query` to sanity-check the data without persisting anything:
+All block queries (and scratch `query` calls) use the same **SLayer** shape:
+DSL strings wrapped in `subqueries`.
 
-```
-run_query(
-    source_id=<id>,
-    query={"subqueries": [{"source_model": "orders", "measures": ["created_at:min", "created_at:max", "*:count"]}]},
-    limit=5
-)
-```
+- Measures are formula strings: `"revenue:sum"`, `"*:count"`, `"revenue:sum / *:count"` — or the bare name of a saved model measure.
+- Filters are DSL strings: `"status == 'completed'"`, `"amount > 100 AND region in ('EU', 'US')"`. Use `{var_name}` placeholders for document variables.
+- Reach joined models via dotted paths: `"customers.region"`. Never write SQL joins yourself.
+- Time bucketing: `"time_dimensions": [{"column": "created_at", "granularity": "month"}]`.
+- Leave the wrapper `start_date` / `end_date` unset so the document's `{start_date}` / `{end_date}` variables apply.
+- Period-over-period comparison: add a `time_shift(...)` measure, e.g. `"time_shift(revenue:sum, -1, year)"`.
 
-Useful for: confirming a column exists and has data, finding the date range, sanity-checking a measure formula, picking sensible default `start_date`/`end_date` for the document. Same query shape as `update_query_block` / `update_chart_block`; no block is created, no document is touched. Optional `variables={"name": "value"}` resolves `{var}` placeholders in filters.
+Full reference: `inspect(reference="memory:help.queries", entity_type="memory")`.
 
 #### Chart Blocks
 
-Queries use the **SLayer** schema — measure/filter formulas are DSL strings, wrapped in `subqueries`:
-
 ```
 update_chart_block(
-    location={doc_id: <id>, slide_name: "<slide>", block_name: "<chart_block>"},
+    location={doc_id: <id>, block_name: "<chart_block>"},
     query={
         "subqueries": [{
             "source_model": "orders",
@@ -164,11 +210,9 @@ Then verify:
 
 ```
 render_chart(
-    location={doc_id: <id>, slide_name: "<slide>", block_name: "<chart_block>"}
+    location={doc_id: <id>, block_name: "<chart_block>"}
 )
 ```
-
-See the `update-chart` skill for chart type guidance and configuration patterns.
 
 #### Text Blocks
 
@@ -176,7 +220,7 @@ First create query blocks for the data:
 
 ```
 update_query_block(
-    location={doc_id: <id>, slide_name: "<slide>", parent_block: "<text_block>"},
+    parent_location={doc_id: <id>, block_name: "<text_block>"},
     query_name="<name>",
     query={<query_config>}
 )
@@ -186,33 +230,40 @@ Then set the template:
 
 ```
 update_text_block(
-    location={doc_id: <id>, slide_name: "<slide>", block_name: "<text_block>"},
-    user_prompt="<template with {variables}>",
+    location={doc_id: <id>, block_name: "<text_block>"},
+    user_prompt="<template>",
     call_llm=<true/false>
 )
 ```
 
-Verify the text block by checking the returned content. See the `update-text-block` skill for template syntax and modes.
+Template syntax:
+
+- `{name}` — the value of a child query (its `query_name`) or a context variable.
+- Arithmetic on numeric variables: `{revenue / users}`.
+- `{Slide::Block}` — content of a block on another slide. Referencing a chart block embeds its data as a markdown table.
+- `call_llm=true` makes the LLM write the text from the referenced data. In that mode, reference data with the directive `:var[{value}]{name="<query_or_block>"}` — at least one such reference is required.
+
+Verify the text block by checking the returned content.
 
 #### Table Blocks
 
-Same pattern as text — create query blocks first, then set the template:
+Same pattern as text — create query blocks first (`mode="table"` returns a full
+result set; optional `pivot_dimension` pivots a dimension into columns), then set
+the template:
 
 ```
 update_query_block(
-    location={doc_id: <id>, slide_name: "<slide>", parent_block: "<table_block>"},
+    parent_location={doc_id: <id>, block_name: "<table_block>"},
     query_name="<name>",
     query={<query_config>},
     mode="table"
 )
 
 update_table_block(
-    location={doc_id: <id>, slide_name: "<slide>", block_name: "<table_block>"},
+    location={doc_id: <id>, block_name: "<table_block>"},
     user_prompt="{<query_name>}"
 )
 ```
-
-See the `update-table-block` skill for table patterns.
 
 ---
 
@@ -240,6 +291,9 @@ Ask the user for feedback.
 If the user wants to make changes, understand the feedback and go back and update the blocks, then render again.
 
 The Motley document is the result of this workflow.
+
+If the user confirmed a non-obvious number or query, save it with `save_memory`
+(attach the query) so future sessions can reuse it.
 
 ### (Optional) Export to another format
 

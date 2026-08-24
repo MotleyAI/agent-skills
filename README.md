@@ -1,61 +1,71 @@
-# Motley agent skills & MCP server
+# Motley Agent Skills
 
-Skills that make your AI agent a reliable data analyst on top of your data via the [Motley](https://motley.ai) platform.
+Skills that make your AI agent a reliable data analyst on the [Motley](https://motley.ai) platform.
 
-If you are looking for an open-source semantic layer, see [SLayer](https://github.com/MotleyAI/slayer).
+| Skill | What it does |
+|-------|--------------|
+| `create-report` | Create a data-driven document with text, tables, and charts from your data. |
+| `semantic-layer-bootstrap` | Set up, curate, and verify the semantic layer for your data source. |
+| `frontend-slides` | Create branded, self-contained HTML presentations. Zero dependencies. |
 
-## What is Motley?
+## Before you start
 
-[Motley](https://motley.ai) is a data storytelling platform that allows AI agents to create data-driven content, such as number-intensive reports, presentations, or notebooks.
+1. Create a [Motley](https://motley.ai) account. A free demo data source is included.
+2. Connect your agent to the Motley MCP server (see below). Only `frontend-slides` works without it.
 
-At the core of Motley is a semantic layer – an inventory of the data you want to use with your agents. It contains metric definitions, column descriptions and other business context that lets the agent understand your data. Instead of stateless text-to-SQL, the agent writes the metrics it needs to the semantic layer, allowing you to reuse them and trace where the data comes from.
-
-The second, complementary part is the document engine – the working surface where agents can create reusable artifacts pulling from the data. They can consist of text, data queries, charts, and tables, and are used on their own or as the basis for your data-driven content.
-
-## Quickstart
-
-To get started, you need a [Motley](https://motley.ai) account connected to a datasource. You can sign up for free and use the built-in demo datasource if you don't have one.
-
-Once installed, invoke the `/create-report` skill to create your first data-driven document.
+## Install
 
 ### Claude Code
 
-Add the marketplace and install the plugin:
+Run:
 
 ```
 /plugin marketplace add MotleyAI/motley-skills
 /plugin install motley@motley-plugins
 ```
 
-Then run `/mcp`, select the **motley** server, and authenticate in your browser to connect your Motley account.
+The plugin includes the Motley MCP server. Run `/mcp`, select **motley**, and sign in.
 
 ### Claude Cowork
 
-1. Open the **Customize** tab and go to **Personal plugins**.
-2. **Add marketplace** and enter `MotleyAI/motley-skills`.
-3. Enable **auto updates** so you always get the latest skills.
-4. **Install** the Motley plugin.
-5. **Authenticate** the Motley connector — sign in to your Motley account in the browser when prompted.
+1. Open **Customize → Personal plugins**.
+2. Add the marketplace `MotleyAI/motley-skills`. Enable auto updates.
+3. Install the **Motley** plugin.
+4. Authenticate the Motley connector in the browser.
 
-If you are an organization admin, you can [install](https://support.claude.com/en/articles/13837433-manage-claude-cowork-plugins-for-your-organization) the plugin for everyone in your organization.
+### Codex, Cursor, and other agents
 
-## Skills
+Install the skills with [skills.sh](https://skills.sh):
 
-This repo contains skills that teach your agent to work with documents and to manage the semantic layer.
+```
+npx skills add MotleyAI/motley-skills
+```
 
-Skills available:
+The installer detects your agent and puts the skills in the correct location.
 
-| Skill | What it does |
-|-------|--------------|
-| `create-report` | End-to-end workflow for building a data-driven document from your data and requirements. This is the main entry point. |
-| `explore-model` | Discover and inspect the models in your semantic layer — and create custom models or measures — before building a document. |
-| `update-text-block` | Create or edit text blocks with template variables, data substitution, or LLM-generated copy. |
-| `update-table-block` | Create or edit table blocks, with optional size constraints and query-, template-, or LLM-driven content. |
-| `update-chart` | Create or edit charts (bar, line, pie, funnel) from a structured query and chart configuration. |
-| `update-query-block` | Define the numerical queries that feed text and table blocks, referenced as `{query_name}` in their templates. |
+Then connect the Motley MCP server. The endpoint is `https://app.motley.ai/api/v1/mcp` (HTTP with OAuth).
 
-Beyond the skills above, **frontend-slides** is a baseline skill for creating branded, self-contained HTML reports and presentations locked to your visual identity — zero dependencies, no build tooling required. On first use, invoke it to run the brand wizard and configure your brand styles; every presentation after that is automatically on-brand.
+**Codex** — add to `~/.codex/config.toml`:
 
-## MCP server
+```toml
+[mcp_servers.motley]
+url = "https://app.motley.ai/api/v1/mcp"
+```
 
-Motley MCP provides a comprehensive set of tools that allow you to inspect the semantic layer, create and update data models, create and modify documents, manage and resolve masters (document templates).
+**Cursor** — add to `~/.cursor/mcp.json`:
+
+```json
+{ "mcpServers": { "motley": { "url": "https://app.motley.ai/api/v1/mcp" } } }
+```
+
+## Use
+
+- Say "create a report on ..." or invoke `create-report` to build your first document.
+- On a fresh data source, invoke `semantic-layer-bootstrap` first to set up and verify the layer.
+- Say "make slides" or invoke `frontend-slides` to build a branded presentation.
+
+## What is Motley?
+
+Motley is a data storytelling platform. Its core is a semantic layer: an inventory of your data with metric definitions and business context. Your agent writes metrics to the layer instead of doing stateless text-to-SQL, so results are reusable and traceable. On top of the layer, the document engine lets agents build living documents from text, queries, charts, and tables.
+
+If you look for an open-source semantic layer, see [SLayer](https://github.com/MotleyAI/slayer).
