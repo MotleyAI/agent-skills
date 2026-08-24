@@ -11,20 +11,22 @@ description: >
 
 End-to-end workflow for creating a data-driven report using Motley.
 
-## Overview
-
-Motley helps to create reports based on the user's data and requirements.
-
 A **report** in Motley is a document consisting of blocks (markdown text, tables, and charts).
 Blocks can reference data queries, other blocks, and context variables.
 
-The report creation workflow has 3 phases:
+The workflow has 3 phases:
 
 1. **Research & Plan** — understand the user's needs & the relevant data
-2. **Creating a document in Motley** – based on the research, write the report content into a document
-3. **Output and iteration** – show the report to the user, ask for feedback, and iterate until it's ready
+2. **Create a document in Motley** — write the report content into a document
+3. **Output and iteration** — show the report to the user and iterate until it's ready
 
-The end result of the workflow is a document in Motley (can be opened via link) and, secondarily, a Markdown export of it.
+The end result is a document in Motley (openable via link) and, secondarily, a Markdown export of it.
+
+The MCP tool schemas and Motley's built-in help are the reference documentation —
+this skill only describes the workflow. If Motley is unfamiliar, start with
+`inspect(reference="memory:help.intro", entity_type="memory")`: concepts, the
+query shape, gotchas, and the deep-dive topics (`memory:help.queries`,
+`memory:help.workflow`, ...).
 
 ---
 
@@ -32,271 +34,103 @@ The end result of the workflow is a document in Motley (can be opened via link) 
 
 Enter plan mode.
 
-Make sure you understand **why** the user wants to create this report, **what** exactly they want to show.
-
-### Learn the query language
-
-If Motley is unfamiliar, read the built-in help first:
-
-```
-inspect(reference="memory:help.intro", entity_type="memory")
-```
-
-It covers the core concepts, the query shape, and the common gotchas, and lists
-deep-dive topics (`memory:help.queries`, `memory:help.formulas`, `memory:help.time`, ...)
-readable the same way.
+Make sure you understand **why** the user wants this report and **what** exactly they want to show.
 
 ### Explore the data
 
-Data is central to the report. It can be used both for charts and inline queries
-embedded in the text.
+Always start with `search(question="...")` — it ranks models, columns, measures,
+and saved memories in one call. A memory from an earlier session may already
+record the right model, a verified example query, or a gotcha.
 
-Start with `search` — it ranks models, columns, measures, and saved memories
-(notes from earlier sessions, often carrying a known-good example query) in one call:
+Then inspect: `inspect(entity_type="model")` lists all models;
+`inspect(reference="<model>", entity_type="model", num_rows=3)` shows one model's
+columns, measures, and sample rows. `list_resources(what="datasources")` gives the
+`source_id`s.
 
-```
-search(question="how do we measure revenue?")
-```
-
-Then list and inspect models to see columns, measures, and sample data:
-
-```
-inspect(entity_type="model")                                   # list all models
-inspect(reference="orders", entity_type="model", num_rows=3)   # one model in detail
-```
-
-To find the `source_id` of a datasource, use `list_resources(what="datasources")`.
-
-If existing models don't have the data you need, extend them with `edit_model` —
-it upserts measures, columns, and joins in one atomic, validated call:
-
-```
-edit_model(
-    model_name="orders",
-    measures=[{"name": "aov", "formula": "revenue:sum / *:count"}]
-)
-```
-
-Use `validate_formula(model_name="orders", kind="measure", expression="...")` to
-syntax-check DSL expressions before committing.
+If existing models lack something, extend them with `edit_model` (upserts
+measures, columns, and joins atomically). Syntax-check DSL formulas with
+`validate_formula` before committing.
 
 ### Scratch lookups
 
-Sanity-check the data with the `query` tool before authoring blocks — nothing is persisted:
-
-```
-query(
-    query={"subqueries": [{"source_model": "orders",
-                           "measures": ["created_at:min", "created_at:max", "*:count"]}]},
-    limit=5
-)
-```
-
-Useful for: confirming a column exists and has data, finding the date range,
-sanity-checking a measure formula, picking sensible default `start_date`/`end_date`
-for the document. Same query shape as the block tools below; no block is created,
-no document is touched. Optional `variables={"name": "value"}` resolves `{var}`
-placeholders in filters.
+Before authoring any block, sanity-check the data with the `query` tool — same
+query shape as the block tools, nothing persisted. Typical probe:
+`measures=["<time_col>:min", "<time_col>:max", "*:count"]` to confirm a column
+has data and find the date range, and to pick sensible default
+`start_date`/`end_date` for the document.
 
 ### Ask questions
 
 Until it's completely clear what the user wants, ask them questions.
-
-If it's unclear from where the data should come, ask them to point exactly.
-
-If anything about the data is ambiguous, ask them for clarification, also listing the possible options.
+If it's unclear where the data should come from, ask them to point exactly.
+If anything about the data is ambiguous, ask for clarification, listing the possible options.
 
 ---
 
 ## Phase 2: Create a document in Motley
 
-A document is a flat sequence of text (Markdown) blocks, table blocks, and charts.
-Text and table blocks can reference queries.
+Create the document with `create_document(name=..., source_id=...)`. All models
+in a document must come from a single source. The document starts blank, as a
+single-slide deck; inspect it any time with `inspect_document`.
 
-To create a document, use the `create_document` tool:
+### Context variables
 
-```
-create_document(
-    name="<descriptive name>",
-    source_id=<source_id>
-)
-```
+Documents have global variables substituted into queries (filters) and templates
+(`{var_name}`) at resolution time. Use them for anything that might change on a
+re-run (customer, region, dates) so the report can be regenerated by swapping
+values. `start_date` / `end_date` are always required; source-specific variables
+may be too — check `get_doc_variables`, set values with `set_doc_variables`.
 
-The document starts blank, as a single-slide deck. You need to provide the
-`source_id` of the models you are going to use. Currently, all the models in a
-document must come from a single source.
+In block queries, leave the wrapper `start_date`/`end_date` unset so the
+document's variables apply.
 
-### Document lifecycle
+### Create blocks
 
-- `inspect_document(doc_id=<id>)` — outline (slide and block names); add `slide_name` / `block_name` for detail.
-- `rename_document(document_id=<id>, new_name="<new title>")` — change a document's title. Empty/whitespace-only names are rejected.
-- `delete_document(document_id=<id>)` — soft-delete. The document is hidden from `list_resources(what="documents")` and `inspect_document` returns a 404 afterwards. Idempotent on already-deleted docs (also returns 404).
+Blocks are created and updated with `update_text_block`, `update_table_block`,
+`update_chart_block`, and `update_query_block`. Each block needs a unique name;
+providing a new name creates a block. Reorganize with `move_block`,
+`rename_block`, `delete_block`, `delete_query`.
 
-### Set Context Variables
+Queries everywhere use the SLayer shape described in `memory:help.queries`.
 
-Documents have global variables substituted into queries (filters) and text blocks (`{var_name}`) at resolution time. Use them for anything that might change on a re-run (customer, region, etc.) so the report can be regenerated by swapping values.
+**Charts** — call `update_chart_block` with a `query` and `chart_details`, then
+**verify visually** with `render_chart`.
 
-Required variables:
-- `start_date` / `end_date` — always required (used by query time filtering); often it's all you need
-- Source-specific variables from parametrized default filters — required when the source declares them
+**Text** — two steps: first attach data with
+`update_query_block(parent_location=..., query_name=..., query=...)`, then set
+the template with `update_text_block`. Check the returned resolved content.
 
-Available/required variables appear in `create_document` response and in `get_doc_variables` response. New variables can also be created as needed.
+**Tables** — same two steps, with `mode="table"` on the query (optionally
+`pivot_dimension`), then `update_table_block` with a template like
+`"{<query_name>}"`.
 
-```
-set_doc_variables(
-    doc_id=<id>,
-    variables={"start_date": "2025-01-01", "end_date": "2025-12-31", "foo": "bar"}
-)
-```
+### Template syntax
 
-Merges with existing values and re-resolves all blocks. Only provide keys you want to change.
-
-### Create Blocks
-
-Creating blocks and updating them is done using the tools:
-
-- `update_text_block`
-- `update_table_block`
-- `update_chart_block`
-- `update_query_block`
-
-Each block must have a unique name by which it can be referenced.
-To create a new block provide a new, unique name.
-
-Block locations are `{doc_id: <id>, block_name: "<name>"}` — `slide_name` is only
-needed for multi-slide decks.
-
-Other block operations: `move_block` (reorder), `rename_block` (rename in place, updates references), `delete_block` (remove a block), `delete_query` (remove a child query from its parent).
-
-### The query shape
-
-All block queries (and scratch `query` calls) use the same **SLayer** shape:
-DSL strings wrapped in `subqueries`.
-
-- Measures are formula strings: `"revenue:sum"`, `"*:count"`, `"revenue:sum / *:count"` — or the bare name of a saved model measure.
-- Filters are DSL strings: `"status == 'completed'"`, `"amount > 100 AND region in ('EU', 'US')"`. Use `{var_name}` placeholders for document variables.
-- Reach joined models via dotted paths: `"customers.region"`. Never write SQL joins yourself.
-- Time bucketing: `"time_dimensions": [{"column": "created_at", "granularity": "month"}]`.
-- Leave the wrapper `start_date` / `end_date` unset so the document's `{start_date}` / `{end_date}` variables apply.
-- Period-over-period comparison: add a `time_shift(...)` measure, e.g. `"time_shift(revenue:sum, -1, year)"`.
-
-Full reference: `inspect(reference="memory:help.queries", entity_type="memory")`.
-
-#### Chart Blocks
-
-```
-update_chart_block(
-    location={doc_id: <id>, block_name: "<chart_block>"},
-    query={
-        "subqueries": [{
-            "source_model": "orders",
-            "measures": ["revenue:sum"],
-            "time_dimensions": [{"column": "created_at", "granularity": "month"}],
-            "order": [{"column": "created_at", "direction": "asc"}]
-        }]
-    },
-    chart_details={
-        "title": "Monthly Revenue",
-        "series_default": {"type": "line", "y_axis": "left",
-                           "number_format": {"type": "currency", "symbol": "$", "precision": 0}},
-        "xAxis": {"label": false, "lines": false},
-        "yAxis": {"label": "Revenue", "lines": true},
-        "legend": {"enabled": false}
-    }
-)
-```
-
-Then verify:
-
-```
-render_chart(
-    location={doc_id: <id>, block_name: "<chart_block>"}
-)
-```
-
-#### Text Blocks
-
-First create query blocks for the data:
-
-```
-update_query_block(
-    parent_location={doc_id: <id>, block_name: "<text_block>"},
-    query_name="<name>",
-    query={<query_config>}
-)
-```
-
-Then set the template:
-
-```
-update_text_block(
-    location={doc_id: <id>, block_name: "<text_block>"},
-    user_prompt="<template>",
-    call_llm=<true/false>
-)
-```
-
-Template syntax:
+In `user_prompt` of text and table blocks:
 
 - `{name}` — the value of a child query (its `query_name`) or a context variable.
 - Arithmetic on numeric variables: `{revenue / users}`.
-- `{Slide::Block}` — content of a block on another slide. Referencing a chart block embeds its data as a markdown table.
-- `call_llm=true` makes the LLM write the text from the referenced data. In that mode, reference data with the directive `:var[{value}]{name="<query_or_block>"}` — at least one such reference is required.
-
-Verify the text block by checking the returned content.
-
-#### Table Blocks
-
-Same pattern as text — create query blocks first (`mode="table"` returns a full
-result set; optional `pivot_dimension` pivots a dimension into columns), then set
-the template:
-
-```
-update_query_block(
-    parent_location={doc_id: <id>, block_name: "<table_block>"},
-    query_name="<name>",
-    query={<query_config>},
-    mode="table"
-)
-
-update_table_block(
-    location={doc_id: <id>, block_name: "<table_block>"},
-    user_prompt="{<query_name>}"
-)
-```
+- `{Slide::Block}` — content of a block on another slide. Referencing a chart
+  block embeds its data as a markdown table.
+- `call_llm=true` makes the LLM write the content from the referenced data. In
+  that mode, reference data with the directive `:var[{value}]{name="<query_or_block>"}`
+  — at least one such reference is required. Leave `call_llm=false` when the
+  template already is the final text.
 
 ---
 
 ## Phase 3: Output and iteration
 
-### Export as Markdown and review
+Export with `export_document(document_id=..., format="markdown", mode="table")` —
+chart data is embedded as markdown tables. Check the output carefully; if
+something is off, go back and update the blocks.
 
-Export the document to markdown format:
-
-```
-export_document(document_id=<id>, format="markdown", mode="table")
-```
-
-This will embed the data for the charts as markdown tables, with chart metadata next to them.
-
-Check the output carefully. Does it look as expected? If not, go back and update the blocks.
-
-
-### Render for the user
-
-Show the user the rendered document as markdown.
-Show a button to open the document in Motley.
-Ask the user for feedback.
-
-If the user wants to make changes, understand the feedback and go back and update the blocks, then render again.
-
-The Motley document is the result of this workflow.
+Show the user the rendered document as markdown, with a button to open it in
+Motley. Ask for feedback and iterate. The Motley document is the result of this
+workflow.
 
 If the user confirmed a non-obvious number or query, save it with `save_memory`
 (attach the query) so future sessions can reuse it.
 
-### (Optional) Export to another format
-
-On user request, export the report to the user's preferred format.
-
-If available, you can use the frontend-slides skill to create a presentation using the content of the document.
+On request, export to another format, or use the frontend-slides skill to create
+a presentation from the document's content.
